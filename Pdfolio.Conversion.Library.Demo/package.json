@@ -1,0 +1,19 @@
+{
+  "name": "pdfolio-demo-viewer",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "api": "node SiteAssets/server.js",
+    "web": "live-server . --port=5500 --no-browser",
+    "demo": "concurrently -n API,WEB \"npm run api\" \"npm run web\""
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0",
+    "live-server": "^1.2.2"
+  }
+}

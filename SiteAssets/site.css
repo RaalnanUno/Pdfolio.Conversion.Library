@@ -1,0 +1,38 @@
+/* Pdfolio Demo Viewer - site.css */
+
+:root {
+  --page-pad: 18px;
+}
+
+body {
+  padding: var(--page-pad);
+}
+
+#meta {
+  font-size: 0.95rem;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+.badge-soft {
+  border: 1px solid rgba(0,0,0,.15);
+  background: rgba(0,0,0,.03);
+  color: #333;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.small-muted {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.actions a {
+  text-decoration: none;
+  margin-right: 6px;
+}
