@@ -1,75 +1,136 @@
-## Backlog Item: Pdfolio Conversion Class Library
+Perfect idea — this is exactly the right time to capture it while the context is fresh.
 
-### Summary
-
-Create a reusable .NET class library that standardizes document-to-PDF conversion across applications. The library will act as a single, well-defined conversion layer, removing the need for each application to implement or maintain its own document conversion logic.
+Below is a **human-sounding backlog addendum** with a **clear to-do list**, broken down by **files and methods**, without over-specifying implementation details. This reads like something a senior engineer would leave for themselves or a teammate.
 
 ---
 
-### Problem Statement
+## Backlog Addendum: Optional Output Location Flag
 
-We currently have multiple applications that need to convert Office documents (Word, Excel, PowerPoint, etc.) into PDFs. Historically, each application has handled this independently, which leads to:
+### Context
 
-* Duplicate logic and inconsistent behavior
-* Higher maintenance overhead
-* Difficulty swapping or upgrading conversion engines
-* Increased risk when tools are unavailable on locked-down systems
+Currently, the demo application produces PDF output relative to its runtime working directory (typically the `bin` folder). While this is fine for development, it’s not always the most intuitive behavior when converting files from arbitrary locations.
 
-This approach does not scale and complicates troubleshooting and long-term support.
+There is interest in adding an **optional flag** that allows the converted PDF to be saved **alongside the source document** instead.
 
----
-
-### Proposed Solution
-
-Introduce a dedicated class library (`Pdfolio.Conversion.Library`) that encapsulates all document-to-PDF conversion logic behind a clean, well-defined API.
-
-The library will:
-
-* Use **Aspose.Total** as the primary conversion engine
-* Accept files or streams and return PDF output
-* Expose clear success/failure results and error details
-* Remain independent of application-level concerns such as configuration files, logging frameworks, databases, or UI
-
-A separate demo/host application will handle configuration, logging, storage, and orchestration.
+This should be additive behavior and **not change the default output location** unless explicitly requested.
 
 ---
 
-### Scope (In Scope)
+## Proposed Behavior (High Level)
 
-* Centralized conversion logic for Office document formats
-* Single dependency surface for conversion tooling
-* Clean API suitable for reuse across services, utilities, or future containers
-* Designed to support future fallback engines if needed (e.g., LibreOffice)
+* Default behavior remains unchanged
+* When a flag is provided (e.g. `--output-near-source`):
 
----
-
-### Out of Scope (By Design)
-
-* Application configuration (`appsettings.json`, environment variables)
-* Dependency injection setup
-* Database access
-* File system persistence
-* UI or CLI concerns
-
-These remain the responsibility of the consuming application.
+  * The PDF is written to the same directory as the input file
+  * The output filename mirrors the input name with a `.pdf` extension
+* The library itself should remain unaware of CLI flags or filesystem decisions
 
 ---
 
-### Benefits
+## To-Do / Design Notes (By Area)
 
-* Reduces duplication and technical debt
-* Makes conversion behavior consistent across applications
-* Simplifies future engine changes or licensing decisions
-* Improves testability and auditability
-* Supports deployment in restricted environments
+### 1. Demo Application – Argument Parsing
+
+**File:** `Program.cs` (or equivalent entry point)
+
+* Add support for an optional command-line flag
+
+  * Example: `--output-near-source`
+* Validate flags independently of file path arguments
+* Ensure missing or unknown flags fail gracefully with a helpful message
+
+**Notes:**
+
+* Argument parsing should remain simple (manual parsing is acceptable)
+* Avoid introducing heavy CLI frameworks unless complexity increases
 
 ---
 
-### Acceptance Criteria
+### 2. Demo Application – Output Path Resolution
 
-* Class library builds independently
-* Conversion logic is callable from a demo/host application
-* Aspose is initialized once and used consistently
-* No application-level dependencies leak into the library
-* Demo application successfully converts representative Office documents to PDF using the library
+**File:** Likely `Program.cs` or a small helper (e.g. `OutputPathResolver.cs`)
 
+* Determine output path based on:
+
+  * Input file path
+  * Presence/absence of the output flag
+* If flag is present:
+
+  * Use `Path.GetDirectoryName(inputPath)`
+* If flag is absent:
+
+  * Use existing default behavior
+* Centralize this logic so it’s easy to change later
+
+---
+
+### 3. Conversion Library – API Expectations
+
+**File:** Conversion entry point (e.g. `DocumentConverter.cs`)
+
+* Confirm the library:
+
+  * Accepts an explicit output path or stream
+  * Does *not* compute filesystem locations internally
+* If needed:
+
+  * Add or clarify method overloads to accept output destination explicitly
+
+**Notes:**
+
+* The library should not infer intent from file paths
+* The caller owns “where does this get written”
+
+---
+
+### 4. Error Handling & Messaging
+
+**Files:** Demo application
+
+* Improve console output to clearly state:
+
+  * Input file path
+  * Output file path
+  * Whether default or “near source” mode was used
+* Ensure failure cases indicate *where* output was expected to go
+
+---
+
+### 5. Backward Compatibility & Safety Checks
+
+* Ensure:
+
+  * Existing scripts still work without modification
+  * No files are overwritten silently unless explicitly intended
+* Consider:
+
+  * Warning if output file already exists
+  * Optional future flag for overwrite behavior (out of scope for now)
+
+---
+
+## Out of Scope (For This Item)
+
+* Persistent configuration via `appsettings.json`
+* Advanced CLI parsing frameworks
+* Multiple output destinations
+* Batch processing or directory recursion
+
+---
+
+## Why This Is Worth Doing
+
+* Improves usability for ad-hoc conversions
+* Makes demo behavior align with user expectations
+* Keeps responsibilities cleanly separated between app and library
+* Provides a foundation for future CLI enhancements without locking in design prematurely
+
+---
+
+If you want next, I can:
+
+* Turn this into **checkbox-style acceptance criteria**
+* Sketch the **exact method signatures** without writing code yet
+* Write a **one-paragraph Jira comment** version for quick updates
+
+Just tell me how formal you want it.
