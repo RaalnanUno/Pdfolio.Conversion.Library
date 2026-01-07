@@ -1,0 +1,3 @@
+ALTER TABLE FileArchive ADD COLUMN PdfReportJson BLOB NULL;
+ALTER TABLE FileArchive ADD COLUMN PdfConverterUsed TEXT NULL;
+ALTER TABLE FileArchive ADD COLUMN PdfErrorJson BLOB NULL;

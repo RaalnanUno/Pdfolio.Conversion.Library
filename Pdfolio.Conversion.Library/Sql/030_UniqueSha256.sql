@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX IF NOT EXISTS UX_FileArchive_Sha256
+ON FileArchive (Sha256);

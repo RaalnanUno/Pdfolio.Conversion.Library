@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Helps keep namespaces consistent -->
+    <RootNamespace>Pdfolio.Conversion.Library</RootNamespace>
+    <AssemblyName>Pdfolio.Conversion.Library</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- SQLite backup DB -->
+    <PackageReference Include="Aspose.Total" Version="25.11.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.*" />
+
+    <!-- Needed for LibreOffice/OpenOffice locators (Registry) -->
+
+    <!-- Aspose converters -->
+
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Embed all SQL scripts (for SqlBootstrapper) -->
+    <EmbeddedResource Include="Sql\**\*.sql" />
+  </ItemGroup>
+
+</Project>
