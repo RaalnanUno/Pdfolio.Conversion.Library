@@ -8,23 +8,27 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Config -->
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.*" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.*" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.*" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Reference your conversion library project -->
+    <!-- Reference the library project directly (avoids stale DLL issues) -->
     <ProjectReference Include="..\Pdfolio.Conversion.Library\Pdfolio.Conversion.Library.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Copy config -->
+    <!-- Needed for ConfigurationBuilder + GetValue() extension -->
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables"
+      Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0" />
+
+    <!-- Pin Sqlite to match the library and remove MSB3277 warnings -->
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.22" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
 
 </Project>

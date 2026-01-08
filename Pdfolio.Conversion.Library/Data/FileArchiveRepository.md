@@ -14,6 +14,7 @@ public sealed class FileArchiveRepository
 
     public sealed record PendingPdfRow(
         long Id,
+        string? OriginalFullPath,
         string OriginalFileName,
         string? OriginalExtension,
         string? ContentType,
@@ -28,29 +29,29 @@ public sealed class FileArchiveRepository
         const string sql = @"
 INSERT INTO FileArchive
 (
-  OriginalFullPath,
-  OriginalFileName,
-  OriginalExtension,
-  ContentType,
-  FileSizeBytes,
-  FileCreatedUtc,
-  FileModifiedUtc,
-  Sha256,
-  OriginalBlob,
-  PdfStatus
+OriginalFullPath,
+OriginalFileName,
+OriginalExtension,
+ContentType,
+FileSizeBytes,
+FileCreatedUtc,
+FileModifiedUtc,
+Sha256,
+OriginalBlob,
+PdfStatus
 )
 VALUES
 (
-  $OriginalFullPath,
-  $OriginalFileName,
-  $OriginalExtension,
-  $ContentType,
-  $FileSizeBytes,
-  $FileCreatedUtc,
-  $FileModifiedUtc,
-  $Sha256,
-  $OriginalBlob,
-  0
+$OriginalFullPath,
+$OriginalFileName,
+$OriginalExtension,
+$ContentType,
+$FileSizeBytes,
+$FileCreatedUtc,
+$FileModifiedUtc,
+$Sha256,
+$OriginalBlob,
+0
 )
 ON CONFLICT(Sha256) DO NOTHING;
 
@@ -88,11 +89,12 @@ LIMIT 1;";
     {
         const string sql = @"
 SELECT
-  Id,
-  OriginalFileName,
-  OriginalExtension,
-  ContentType,
-  OriginalBlob
+Id,
+OriginalFullPath,
+OriginalFileName,
+OriginalExtension,
+ContentType,
+OriginalBlob
 FROM FileArchive
 WHERE PdfBlob IS NULL AND PdfStatus = 0
 ORDER BY Id
@@ -111,12 +113,13 @@ LIMIT $Take;";
         while (await r.ReadAsync())
         {
             var id = r.GetInt64(0);
-            var name = r.GetString(1);
-            var ext = r.IsDBNull(2) ? null : r.GetString(2);
-            var ct = r.IsDBNull(3) ? null : r.GetString(3);
+            var fullPath = r.IsDBNull(1) ? null : r.GetString(1);
+            var name = r.GetString(2);
+            var ext = r.IsDBNull(3) ? null : r.GetString(3);
+            var ct = r.IsDBNull(4) ? null : r.GetString(4);
             var blob = (byte[])r["OriginalBlob"];
 
-            results.Add(new PendingPdfRow(id, name, ext, ct, blob));
+            results.Add(new PendingPdfRow(id, fullPath, name, ext, ct, blob));
         }
 
         return results;
@@ -127,13 +130,13 @@ LIMIT $Take;";
         const string sql = @"
 UPDATE FileArchive
 SET
-  PdfBlob = $PdfBlob,
-  PdfConvertedUtc = $PdfConvertedUtc,
-  PdfStatus = 1,
-  PdfError = NULL,
-  PdfConverterUsed = $PdfConverterUsed,
-  PdfReportJson = $PdfReportJson,
-  PdfErrorJson = NULL
+PdfBlob = $PdfBlob,
+PdfConvertedUtc = $PdfConvertedUtc,
+PdfStatus = 1,
+PdfError = NULL,
+PdfConverterUsed = $PdfConverterUsed,
+PdfReportJson = $PdfReportJson,
+PdfErrorJson = NULL
 WHERE Id = $Id;";
 
         await using var conn = new SqliteConnection(_connString);
@@ -157,10 +160,10 @@ WHERE Id = $Id;";
         const string sql = @"
 UPDATE FileArchive
 SET
-  PdfStatus = 2,
-  PdfError = $Err,
-  PdfConverterUsed = $PdfConverterUsed,
-  PdfErrorJson = $PdfErrorJson
+PdfStatus = 2,
+PdfError = $Err,
+PdfConverterUsed = $PdfConverterUsed,
+PdfErrorJson = $PdfErrorJson
 WHERE Id = $Id;";
 
         await using var conn = new SqliteConnection(_connString);

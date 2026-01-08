@@ -22,7 +22,10 @@ public static class PdfConverterFactory
         AsposeOptions? Aspose = null,
         OfficeBinaryOptions? LibreOffice = null,
         OfficeBinaryOptions? OpenOffice = null,
-        bool KeepTempOnFailure = false
+        bool KeepTempOnFailure = false,
+
+        // NEW (non-breaking): optional disk save wrapper
+        bool EnableDiskSave = false
     );
 
     public static IPdfConverter Create(PdfConverterFactoryOptions options)
@@ -32,14 +35,20 @@ public static class PdfConverterFactory
 
         var mode = (options.Mode ?? "Auto").Trim().ToLowerInvariant();
 
-        return mode switch
+        IPdfConverter baseConverter = mode switch
         {
-            "auto" or "default" => CreateAuto(options),
-            "aspose"            => CreateAspose(options),
-            "libreoffice" or "lo" => CreateLibreOffice(options),
-            "openoffice"  or "oo" => CreateOpenOffice(options),
-            _ => throw new InvalidOperationException($"Unknown Mode '{options.Mode}'. Use Auto, Aspose, LibreOffice, OpenOffice.")
+            "auto" or "default"     => CreateAuto(options),
+            "aspose"                => CreateAspose(options),
+            "libreoffice" or "lo"   => CreateLibreOffice(options),
+            "openoffice"  or "oo"   => CreateOpenOffice(options),
+            _ => throw new InvalidOperationException(
+                $"Unknown Mode '{options.Mode}'. Use Auto, Aspose, LibreOffice, OpenOffice."
+            )
         };
+
+        return options.EnableDiskSave
+            ? new DiskSavePdfConverter(baseConverter)
+            : baseConverter;
     }
 
     private static IPdfConverter CreateAuto(PdfConverterFactoryOptions options)
