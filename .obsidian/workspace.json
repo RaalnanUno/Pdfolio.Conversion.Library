@@ -185,6 +185,7 @@
   },
   "active": "4d99fd1603a3918c",
   "lastOpenFiles": [
+    "docs/ADR-005-PDF-Conversion-Handoff-with-Reliability-Buffer.md",
     "docs/ADR-005-PDF-Conversion-Handoff-and-Reliability-Buffer.md",
     "docs/ADR-004-PDF-Conversion-Decorator-and-OptIn-Disk-Save.md",
     "Pdfolio.Conversion.Library.Demo/bin/Debug/net8.0/Data/PdfolioBackup.db-journal",
