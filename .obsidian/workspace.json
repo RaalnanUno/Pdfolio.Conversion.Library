@@ -185,6 +185,7 @@
   },
   "active": "4d99fd1603a3918c",
   "lastOpenFiles": [
+    "docs/ADR-004-PDF-Conversion-Decorator-and-OptIn-Disk-Save.md",
     "Pdfolio.Conversion.Library.Demo/bin/Debug/net8.0/Data/PdfolioBackup.db-journal",
     "Pdfolio.TestFiles/sample.pdf",
     "Pdfolio.TestFiles/Sample.docx",
@@ -195,7 +196,6 @@
     "Pdfolio.Conversion.Library.Demo/bin/Debug/net8.0/Pdfolio.Conversion.Library.Demo.dll",
     "Pdfolio.Conversion.Library.Demo/bin/Debug/net8.0/Pdfolio.Conversion.Library.Demo.runtimeconfig.json",
     "Pdfolio.Conversion.Library.Demo/obj/Debug/net8.0/Pdfolio.Conversion.Library.Demo.genruntimeconfig.cache",
-    "Pdfolio.Conversion.Library.Demo/bin/Debug/net8.0/Pdfolio.Conversion.Library.Demo.deps.json",
     "Pdfolio.Conversion.Library/Converters/DiskSavePdfConverter.md"
   ]
 }
