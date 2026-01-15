@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>PDFolio — Expanded Decision Quiz</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+ <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body data-view="expanded" data-data-url="./decision-data.json" data-show-why="true">
+  <div class="wrap">
+    <h1>PDFolio — Decision Quiz (<a href="boss.html">Expanded</a> View)</h1>
+    <p class="small">More detail for engineers. Check requirements. Scores update instantly.</p>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Requirements</h2>
+        <div id="requirements"></div>
+        <div id="messages"></div>
+      </div>
+
+      <div class="card">
+        <h2>Recommendation</h2>
+        <div class="kpi">
+          <div class="box">
+            <div class="small">Best fit</div>
+            <div id="best" class="num">—</div>
+          </div>
+          <div class="box">
+            <div class="small">Runner-up</div>
+            <div id="second" class="num">—</div>
+          </div>
+          <div class="box">
+            <div class="small">Confidence</div>
+            <div id="confidence" class="num">—</div>
+          </div>
+        </div>
+        <div id="copySummaryHost" style="margin-bottom:10px;"></div>
+
+        <pre id="execSummary" style="
+  white-space: pre-wrap;
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(36,48,79,.6);
+  border-radius: 12px;
+  padding: 10px;
+  margin: 0 0 10px;
+  color: #e9eeff;
+  font-size: 12px;
+"></pre>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Score</th>
+              <th>Drivers / Notes</th>
+            </tr>
+          </thead>
+          <tbody id="results"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="./decision-engine.js"></script>
+</body>
+
+</html>

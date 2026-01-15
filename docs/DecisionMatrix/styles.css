@@ -1,0 +1,118 @@
+    :root {
+        --bg: #0b1220;
+        --card: #111a2e;
+        --line: #24304f;
+        --text: #e9eeff;
+        --muted: #a9b5d1;
+    }
+
+    body {
+        margin: 0;
+        font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+    }
+
+    .wrap {
+        max-width: 1100px;
+        margin: 24px auto;
+        padding: 0 16px;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        gap: 14px;
+    }
+
+    .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 14px;
+    }
+
+    .row {
+        display: flex;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(36, 48, 79, .6);
+    }
+
+    .row:last-child {
+        border-bottom: none;
+    }
+
+    .hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+    }
+
+    .kpi {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .kpi .box {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px;
+    }
+
+    .kpi .num {
+        font-size: 18px;
+        font-weight: 800;
+        margin-top: 4px;
+    }
+
+    .small {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th,
+    td {
+        border-bottom: 1px solid rgba(36, 48, 79, .6);
+        padding: 10px 8px;
+        vertical-align: top;
+    }
+
+    th {
+        text-align: left;
+        color: var(--muted);
+    }
+
+    .score {
+        font-weight: 800;
+    }
+
+    .why {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.25;
+    }
+
+    .rank1 {
+        outline: 2px solid rgba(94, 234, 212, .35);
+        border-radius: 8px;
+    }
+
+    #messages {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 13px;
+    }
+
+    @media (max-width: 900px) {
+        .grid {
+            grid-template-columns: 1fr;
+        }
+    }
