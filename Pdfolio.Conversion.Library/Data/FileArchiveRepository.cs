@@ -21,6 +21,43 @@ public sealed class FileArchiveRepository
         byte[] OriginalBlob
     );
 
+    public async Task TrackFileExtensionConversionAsync(string? extension)
+    {
+        var ext = NormalizeExtension(extension);
+        if (ext is null)
+            return;
+
+        const string sql = @"
+INSERT INTO FileExtensions
+(
+    Extension,
+    ConversionCount,
+    FirstSeenUtc,
+    LastSeenUtc
+)
+VALUES
+(
+    $Ext,
+    1,
+    $Now,
+    $Now
+)
+ON CONFLICT(Extension) DO UPDATE SET
+    ConversionCount = ConversionCount + 1,
+    LastSeenUtc = $Now;
+";
+
+        await using var conn = new SqliteConnection(_connString);
+        await conn.OpenAsync();
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+
+        cmd.Parameters.AddWithValue("$Ext", ext);
+        cmd.Parameters.AddWithValue("$Now", DateTime.UtcNow.ToString("O"));
+
+        await cmd.ExecuteNonQueryAsync();
+    }
     public async Task<long> InsertFileAsync(FileInfo file)
     {
         byte[] bytes = await File.ReadAllBytesAsync(file.FullName);
@@ -123,6 +160,24 @@ LIMIT $Take;";
         }
 
         return results;
+    }
+
+
+
+    private static string? NormalizeExtension(string? extension)
+    {
+        if (string.IsNullOrWhiteSpace(extension))
+            return null;
+
+        var ext = extension.Trim();
+
+        if (!ext.StartsWith('.'))
+            ext = "." + ext;
+
+        ext = ext.ToLowerInvariant();
+
+        // sanity: "." alone is useless
+        return ext.Length < 2 ? null : ext;
     }
 
     public async Task MarkPdfSuccessAsync(long id, byte[] pdfBytes, string? converterUsed, byte[]? reportJson)

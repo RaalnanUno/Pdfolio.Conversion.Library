@@ -28,14 +28,17 @@ public static class SqlBootstrapper
 
         foreach (var scriptResourceName in scripts)
         {
-            var shortName = ResourceToShortFileName(scriptResourceName); // e.g. "010_FileArchive.sql"
+            var shortName = ResourceToShortFileName(scriptResourceName);
 
             if (await IsScriptAppliedAsync(connString, shortName))
                 continue;
 
+            Console.WriteLine("[SQL] Applying: " + shortName);
+
             await RunEmbeddedScriptAsync(connString, scriptResourceName);
             await MarkScriptAppliedAsync(connString, shortName);
         }
+
     }
 
     private static async Task<bool> IsScriptAppliedAsync(string connString, string scriptName)
