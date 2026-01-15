@@ -1,240 +1,264 @@
-# Pdfolio.Conversion.Library
+# PDFolio Conversion Workspace
 
-**Pdfolio** is a **library-first PDF conversion system** for .NET 8 that converts Office documents into PDFs using a deterministic, auditable conversion pipeline.
+A small, composable **.NET 8** PDF conversion workspace built around a single interface (`IPdfConverter`) and multiple converter implementations (Aspose, LibreOffice headless, OpenOffice headless) that can be chained and wrapped with decorators (fallback, disk-save, missing-binary guard).
 
-The project is intentionally **host-agnostic** and designed to be embedded into other applications (console apps, services, APIs, schedulers) without modification.
+This repo currently contains:
 
----
-
-## What Pdfolio Does
-
-* Converts Office documents → PDF
-* Uses **Aspose** as the primary converter
-* Falls back to **LibreOffice** and **OpenOffice** (headless)
-* Produces a **structured JSON conversion report**
-* Optionally persists results to SQLite (demo only)
+- **Pdfolio.Conversion.Library** – the conversion library (contracts + implementations + reports)
+- **Pdfolio.Conversion.Library.Demo** – a console demo app that converts one file or a folder and stores results in SQLite
 
 ---
 
-## What Pdfolio Does *Not* Do
+## Why this exists
 
-* ❌ Assume IIS, HTTP, or UI
-* ❌ Write output files to disk in the library
-* ❌ Depend on SQLite or any database
-* ❌ Log to the console from library code
+Most apps need “convert Office docs to PDF” and they need it in a way that is:
 
----
-
-## High-Level Architecture
-
-```
-Caller Application
-        |
-        v
-Pdfolio.Conversion.Library
-        |
-        v
-PDF bytes + ConversionReport
-```
-
-The library returns **data**, not side effects.
+- **Pluggable** (swap converters per environment)
+- **Observable** (conversion report, attempts, timing, hashes)
+- **Resilient** (fallback strategy when binaries aren’t installed)
+- **Safe to run on locked-down machines** (skip when LO/OO isn’t available; no hard crash)
 
 ---
 
-## Conversion Sequence (End-to-End)
+## High-level design
 
-```mermaid
-sequenceDiagram
-    participant Caller
-    participant Library as Pdfolio Conversion Library
-    participant Aspose
-    participant LibreOffice
-    participant OpenOffice
-    participant DemoDB as SQLite Backup (Demo)
+### Core contract
 
-    Caller->>Library: ConvertToPdf(ConversionRequest)
+All converters implement:
 
-    Library->>Aspose: Attempt conversion
-    alt Aspose succeeds
-        Aspose-->>Library: PDF bytes
-        Library-->>Caller: ConversionResult (success)
-        Library-->>DemoDB: Persist PDF + Report (demo only)
-    else Aspose fails
-        Library->>LibreOffice: Attempt conversion
-        alt LibreOffice available & succeeds
-            LibreOffice-->>Library: PDF bytes
-            Library-->>Caller: ConversionResult (success)
-            Library-->>DemoDB: Persist PDF + Report (demo only)
-        else LibreOffice missing/fails
-            Library->>OpenOffice: Attempt conversion
-            alt OpenOffice available & succeeds
-                OpenOffice-->>Library: PDF bytes
-                Library-->>Caller: ConversionResult (success)
-                Library-->>DemoDB: Persist PDF + Report (demo only)
-            else All converters fail
-                Library-->>Caller: PdfConversionFailedException
-                Library-->>DemoDB: Persist error report (demo only)
-            end
-        end
-    end
-```
+- `IPdfConverter`
+  - `Name` – human readable converter name
+  - `ConvertToPdfAsync(ConversionRequest)` – returns `ConversionResult` (PDF bytes + `ConversionReport`)
 
-### Key Guarantees
+Key DTOs:
 
-* Converter order is **fixed and deterministic**
-* Missing binaries are **not fatal**
-* Every attempt is recorded in the report
-* The caller always knows **what happened and why**
+- `ConversionRequest`
+  - `InputBytes`, `OriginalFileName`
+  - optional metadata: `Extension`, `ContentType`, `CorrelationId`, `Tags`
+  - optional disk-save support:
+    - `OriginalFullPath`
+    - `SavePdfNextToOriginal`
+    - `OutputPdfFileName`
+- `ConversionResult`
+  - `PdfBytes`
+  - `Report` (success/failure, timing, hashes, attempts, steps)
+- `ConversionReport`
+  - includes SHA256 hashes of input/output, converter attempts, steps, error details, etc.
 
 ---
 
-## Repository Structure
+## Converters included
 
-```
-Pdfolio.Conversion.Library/
-├── Pdfolio.Conversion.Library/        # Core conversion library
-│   ├── Abstractions/
-│   ├── Converters/
-│   ├── Factory/
-│   ├── Locators/
-│   ├── Models/
-│   ├── Exceptions/
-│   ├── Data/                          # SQLite (demo only)
-│   └── Utility/
-│
-├── Pdfolio.Conversion.Library.Demo/   # Console demo / harness
-│   ├── Program.cs
-│   ├── appsettings.json
-│   └── Data/                          # Local DB (gitignored)
-│
-├── Pdfolio.TestFiles/                 # Input test documents
-│
-├── .github/
-│   └── copilot-instructions.md
-│
-├── README.md
-└── .gitignore
-```
+### Aspose (in-memory)
+**`AsposePdfConverter`**
+- Converts from bytes → PDF bytes using:
+  - Aspose.Words (doc/docx/rtf/txt)
+  - Aspose.Cells (xls/xlsx/csv)
+  - Aspose.Slides (ppt/pptx)
+- Optional license support via `AsposeOptions.LicensePath`
+- Runs fully in-memory (no temp files)
+
+### LibreOffice headless (temp-file + process)
+**`LibreOfficeHeadlessPdfConverter`**
+- Writes input bytes to a temp working folder
+- Executes `soffice` with `--headless --convert-to pdf`
+- Reads produced PDF bytes back into memory
+- Best-effort cleanup (unless `KeepTempOnFailure = true`)
+
+### OpenOffice headless (temp-file + process)
+**`OpenOfficeHeadlessPdfConverter`**
+- Similar to LibreOffice converter, but includes:
+  - isolated `UserInstallation` profile
+  - `.com` launcher preference (helps process behavior on Windows)
+  - polling for produced PDF (OpenOffice can exit before write completes)
+  - default `KeepTempOnFailure = true` so you can inspect failures
 
 ---
 
-## Core Concepts
+## Composition utilities (wrappers)
 
-### ConversionRequest
+### Auto-chain / ordered attempts
+**`ChainPdfConverter`**
+- Tries converters in order until one succeeds
+- Produces a single unified `ConversionReport` including:
+  - every attempt (Success / Failed / Missing)
+  - timing
+  - steps (“Attempt”, etc.)
+- Throws `PdfConversionFailedException` with report if all fail
 
-Represents a single conversion job:
+### Missing binary guard
+**`MissingBinaryGuardConverter`**
+- Wraps headless converters and translates “soffice missing/not runnable” failures into:
+  - `ConverterMissingException`
+- Useful when a machine is not allowed to install LibreOffice/OpenOffice
 
-* Input bytes
-* Filename + extension
-* Correlation ID
-* Arbitrary metadata tags
+### Primary + fallback
+**`FallbackPdfConverter`**
+- Tries `_primary`, then `_fallback` if primary throws
+- Used to support “installed soffice first, copied soffice as fallback” patterns
 
-### ConversionResult
-
-Returned on success:
-
-* PDF bytes
-* ConversionReport
-
-### ConversionReport
-
-Structured JSON describing:
-
-* Which converters were attempted
-* Duration per attempt
-* Success/failure reasons
-* Final converter used
-
-This report is designed for **auditability**, not logging.
+### Optional disk save decorator
+**`DiskSavePdfConverter`**
+- If `request.SavePdfNextToOriginal == true`, writes the PDF next to the original file
+- **Never throws due to disk write failures**
+  - instead it records a `ConversionStep` named `SavedPdfToDisk` with status info
 
 ---
 
-## Demo Application
+## Factory
 
-`Pdfolio.Conversion.Library.Demo` is a **test harness**, not a production component.
+**`PdfConverterFactory`** is the single place that builds a converter pipeline for the environment.
 
-It demonstrates:
+Supported `Mode` values:
 
-* CLI argument handling
-* Folder and single-file conversion
-* SQLite persistence
-* Human-readable console output
+- `Auto` (default): **Aspose → LibreOffice → OpenOffice**
+- `Aspose`
+- `LibreOffice` / `lo`
+- `OpenOffice` / `oo`
 
-### Run the demo
+Factory also supports:
 
-```powershell
-cd Pdfolio.Conversion.Library.Demo
+- discovery of soffice paths via:
+  - `SOFFICE_PATH` (LibreOffice)
+  - `OPENOFFICE_SOFFICE_PATH` (OpenOffice)
+  - common install directories
+  - registry (best effort)
+- optional fallback soffice binaries (copied EXEs)
+- optional disk-save wrapper via `EnableDiskSave`
+
+---
+
+## Demo app
+
+Project: **Pdfolio.Conversion.Library.Demo**
+
+What it does:
+- Reads config (`appsettings.json` + env vars)
+- Ensures SQLite schema exists (embedded SQL migrations)
+- Ingests files into a `FileArchive` table (stores original bytes + sha256)
+- Converts each file to PDF using the factory pipeline
+- Writes results to DB:
+  - success → `PdfBlob`, `PdfConverterUsed`, `PdfReportJson`
+  - fail → `PdfStatus`, `PdfError`, `PdfErrorJson`
+  - missing converter → skips and leaves record pending (status 0)
+
+### Run
+
+Convert a single file:
+```bash
+dotnet run -- "..\Pdfolio.TestFiles\sample.docx"
+````
+
+Convert all files in a folder:
+
+```bash
 dotnet run -- --folder "..\Pdfolio.TestFiles"
 ```
 
-Or a single file:
-
-```powershell
-dotnet run -- "..\Pdfolio.TestFiles\sample.docx"
-```
-
----
-
-## SQLite Backup Database (Demo Only)
-
-The demo persists results to:
-
-```
-bin/Debug/net8.0/Data/PdfolioBackup.db
-```
-
-Stored fields include:
-
-* Original file metadata
-* PDF BLOB
-* Conversion report JSON
-* Error JSON (if failed)
-
-> SQLite exists **only** to make demo results inspectable.
-> The library itself does not depend on it.
+> The demo prints out the resolved SQLite DB path and whether disk-save is enabled.
 
 ---
 
 ## Configuration (Demo)
 
-```json
-{
-  "Pdf": {
-    "Mode": "Auto",
-    "TimeoutSeconds": 60,
-    "TempPath": "Temp\\Pdfolio",
-    "AsposeLicensePath": "..\\Pdfolio.Conversion.Library\\licenses\\aspose.lic"
-  }
-}
+The demo uses these settings (names based on the code):
+
+* `ConnectionStrings:BackupDb`
+  SQLite connection string (relative paths are resolved to the EXE directory)
+
+* `Pdf:TempPath`
+  Temp working folder used by LibreOffice/OpenOffice converters
+
+* `Pdf:TimeoutSeconds`
+  Process timeout for headless converters (default 60)
+
+* `Pdf:Mode`
+  Auto | Aspose | LibreOffice | OpenOffice
+
+* `Pdf:AsposeLicensePath`
+  Optional Aspose license file path (relative allowed)
+
+* `Pdf:LibreOffice:SofficePath`
+
+* `Pdf:LibreOffice:FallbackSofficePath`
+
+* `Pdf:OpenOffice:SofficePath`
+
+* `Pdf:OpenOffice:FallbackSofficePath`
+
+* `Pdf:KeepTempOnFailure`
+  When true, temp folders are retained for inspection
+
+* `Pdf:SavePdfNextToOriginal`
+  When true, the demo requests disk-save behavior (writes PDF next to source file)
+
+Environment variable overrides (locators):
+
+* `SOFFICE_PATH` (LibreOffice)
+* `OPENOFFICE_SOFFICE_PATH` (OpenOffice)
+
+---
+
+## Database
+
+The library/demo uses SQLite with an embedded migration runner:
+
+* `SqlBootstrapper`
+
+  * runs embedded SQL scripts in order
+  * tracks applied scripts in `SchemaMigrations`
+
+Repository:
+
+* `FileArchiveRepository`
+
+  * `InsertFileAsync(FileInfo file)`
+  * `GetPendingPdfAsync()`
+  * `MarkPdfSuccessAsync(...)`
+  * `MarkPdfFailedAsync(...)`
+
+---
+
+## Typical usage in code (library consumer)
+
+```csharp
+using Pdfolio.Conversion.Factory;
+using Pdfolio.Conversion.Models;
+
+var converter = PdfConverterFactory.Create(new PdfConverterFactory.PdfConverterFactoryOptions(
+    TempPath: @"C:\temp\pdfolio",
+    TimeoutSeconds: 60,
+    Mode: "Auto",
+    Aspose: new PdfConverterFactory.AsposeOptions(LicensePath: @"licenses\Aspose.Total.lic"),
+    KeepTempOnFailure: true,
+    EnableDiskSave: false
+));
+
+var req = new ConversionRequest(
+    InputBytes: File.ReadAllBytes(@"C:\in\sample.docx"),
+    OriginalFileName: "sample.docx",
+    Extension: ".docx",
+    CorrelationId: "example:001",
+    Tags: new Dictionary<string,string> { ["source"] = "my-app" }
+);
+
+var result = await converter.ConvertToPdfAsync(req);
+File.WriteAllBytes(@"C:\out\sample.pdf", result.PdfBytes);
 ```
 
 ---
 
-## Error Handling Philosophy
+## Roadmap / next steps
 
-* Errors are **data**, not strings
-* Exceptions preserve original context
-* Missing converters ≠ failure
-* Failures are explainable, not silent
-
----
-
-## Intended Evolution
-
-Pdfolio is designed to be reused by:
-
-* IIS-hosted APIs
-* Windows services
-* Queue workers
-* Scheduled jobs
-* Containerized services
-
-No architectural changes are required to support these.
+* Finish the “thread” on the demo project (polish config + sample files + README examples)
+* Add unit/integration tests per converter
+* Add structured logging hooks (optional) around attempts/steps
+* Add support for more input types (images → PDF, HTML → PDF, etc.) if needed
+* Package as NuGet for easy reuse across EVSuite apps
 
 ---
 
-## Philosophy
+## License / Notes
 
-> Convert once.
-> Know exactly how it happened.
-> Never guess why it failed.
+* Aspose converters require Aspose packages and will run in evaluation mode if no license is provided.
+* LibreOffice/OpenOffice converters require a runnable `soffice` binary on the host (or configured fallback binary path).
