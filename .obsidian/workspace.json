@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/DecisionMatrix/Executive Decision memo.md",
+                "file": "prompt.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Executive Decision memo"
+              "title": "prompt"
             }
           }
         ]
@@ -185,20 +185,21 @@
   },
   "active": "4d99fd1603a3918c",
   "lastOpenFiles": [
-    "docs/DecisionMatrix/DecisionMatrixFlowChart.md",
+    "Pdfolio.TestFiles/Input.pdf",
+    "Pdfolio.Conversion.Library.Demo/bin/Debug/net8.0/Data/PdfolioBackup.db-journal",
+    "Pdfolio.Conversion.Library.Demo/bin/Debug/net8.0/Data/PdfolioBackup.db",
+    "Pdfolio.Conversion.Library.Demo/bin/Debug/net8.0/Data",
+    "Pdfolio.Conversion.Library.Demo/bin/Debug/net8.0/Pdfolio.Conversion.Library.Demo.pdb",
+    "Pdfolio.Conversion.Library.Demo/bin/Debug/net8.0/Pdfolio.Conversion.Library.Demo.dll",
+    "Pdfolio.Conversion.Library.Demo/bin/Debug/net8.0/Pdfolio.Conversion.Library.Demo.runtimeconfig.json",
+    "Pdfolio.Conversion.Library.Demo/bin/Debug/net8.0/Pdfolio.Conversion.Library.Demo.deps.json",
+    "Pdfolio.Conversion.Library.Demo/bin/Debug/net8.0/appsettings.json",
+    "Pdfolio.Conversion.Library.Demo/bin/Debug/net8.0/Pdfolio.Conversion.Library.Demo.exe",
+    "Pdfolio.Conversion.Library.Demo/obj/Debug/net8.0/Pdfolio..A9161B6F.Up2Date",
     "docs/DecisionMatrix/Executive Decision memo.md",
+    "docs/DecisionMatrix/DecisionMatrixFlowChart.md",
     "prompt.md",
-    "docs/DecisionMatrix/styles.css",
-    "docs/DecisionMatrix/style.css",
     "docs/DecisionMatrix/DecisionMatrix.md",
-    "docs/DecisionMatrix/expanded.html",
-    "docs/DecisionMatrix/decision-engine.js",
-    "docs/DecisionMatrix/decision-data.json",
-    "docs/DecisionMatrix/boss.html",
-    "docs/DecisionMatrix",
-    "docs/expanded.html",
-    "docs/boss.html",
-    "docs/decision-engine.js",
     "docs/ADR-005-PDF-Conversion-Handoff-with-Reliability-Buffer.md",
     "docs/ADR-005-PDF-Conversion-Handoff-and-Reliability-Buffer.md",
     "docs/ADR-004-PDF-Conversion-Decorator-and-OptIn-Disk-Save.md",

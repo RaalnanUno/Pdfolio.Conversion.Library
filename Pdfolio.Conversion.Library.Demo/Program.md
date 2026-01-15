@@ -233,6 +233,10 @@ foreach (var path in filesToConvert)
             reportJson: reportJson
         );
 
+        await repo.TrackFileExtensionConversionAsync(fi.Extension);
+Console.WriteLine($"[EXT] tracked: {fi.Extension}");
+
+
         Console.WriteLine($"SUCCESS: Id={id} Converter={result.Report.SuccessfulConverter} PdfBytes={result.PdfBytes.Length}");
         ok++;
     }
