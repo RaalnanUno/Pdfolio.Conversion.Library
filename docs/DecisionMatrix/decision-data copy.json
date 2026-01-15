@@ -1,0 +1,512 @@
+{
+  "meta": {
+    "title": "PDFolio — Document Viewing Decision Quiz",
+    "scoreRange": { "min": 0, "max": 100 },
+    "baseScore": 50,
+    "execSummary": {
+      "header": "PDFolio Decision Quiz — Executive Summary",
+      "bulletPrefix": "- "
+    }
+  },
+
+  "friendlyRequirementNames": {
+    "fast": "Fastest path to production",
+    "lowApproval": "Minimize security/procurement approvals",
+    "noOfficeOnServer": "No Office binaries on the web/app server",
+    "dockerAllowed": "Docker/containers allowed",
+    "cloudInfraAvailable": "Cloud account + infra can be approved/setup",
+    "m365StorageOk": "M365 storage acceptable (SharePoint/OneDrive)",
+    "usersHaveM365Identity": "Users authenticate with M365 identities",
+    "noDownload": "In-browser viewing (no downloads)",
+    "signing": "Document signing required",
+    "highFidelity": "High-fidelity rendering matters",
+    "lowCost": "Minimize licensing cost",
+
+    "aadAuth": "Users/app can authenticate via Entra ID (AAD)",
+    "m365DataAllowed": "Compliance allows data to reside in M365 (even temporarily)",
+    "m365ServiceOwnedStorage": "Service-owned SharePoint site / drive is approved",
+    "m365AppRegistrationOk": "App registration in Entra ID is allowed",
+    "m365GraphPermissionsOk": "Graph permissions can be approved (Sites/Files scopes)",
+    "m365EmbeddingAllowed": "Embedding/preview is allowed (CSP/iframe/cross-domain OK)",
+    "m365LifecycleDefined": "Lifecycle rules defined (retention/cleanup/audit)",
+    "m365NetworkAccessOk": "Network allows access to SharePoint/OneDrive endpoints",
+    "m365ExternalSharingAllowed": "External sharing is allowed (if required) — otherwise internal-only",
+    "m365IsSystemOfRecordOk": "M365 can be system-of-record OR staging is explicitly permitted",
+
+    "graphConversionNeeded": "Cloud conversion via Graph is acceptable (upload→convert→download)",
+    "graphUploadStagingOk": "Staging uploads to OneDrive/SharePoint is acceptable",
+    "graphAppOnlyAllowed": "App-only (client credential) access is allowed (preferred for services)",
+    "cspRelaxationOk": "Security will allow CSP changes needed for embedding",
+    "pocAllowed": "POC environment/time is approved (to validate approach quickly)"
+  },
+
+  "options": [
+    {
+      "key": "openoffice",
+      "name": "OpenOffice (Headless Convert)",
+      "group": "convert",
+      "notes": [
+        "Local headless conversion using soffice.",
+        "Prefer only if containerized; otherwise installing on server triggers security concerns."
+      ]
+    },
+    {
+      "key": "libreoffice",
+      "name": "LibreOffice (Headless Convert)",
+      "group": "convert",
+      "notes": [
+        "Most common open-source headless converter.",
+        "Works well as a container microservice."
+      ]
+    },
+    {
+      "key": "aspose",
+      "name": "Aspose (In-Process Convert)",
+      "group": "convert",
+      "notes": [
+        "Highest fidelity and reliability.",
+        "Procurement + legal + security review can be slow."
+      ]
+    },
+    {
+      "key": "msgraph_convert",
+      "name": "MS Graph (Convert to PDF)",
+      "group": "convert",
+      "notes": [
+        "Cloud conversion via Microsoft 365 services.",
+        "Requires tenant, app registration, and permissions."
+      ]
+    },
+    {
+      "key": "sharepoint_preview",
+      "name": "SharePoint (Preview / Embed)",
+      "group": "preview",
+      "notes": [
+        "Best in-browser viewing if documents live in SharePoint.",
+        "Often depends on user identity/access policy."
+      ]
+    },
+    {
+      "key": "onedrive_preview",
+      "name": "OneDrive (Preview / Embed)",
+      "group": "preview",
+      "notes": [
+        "Best in-browser viewing if documents live in OneDrive.",
+        "Often depends on user identity/access policy."
+      ]
+    }
+  ],
+
+  "requirements": [
+    {
+      "id": "fast",
+      "label": "Fastest path to production",
+      "hint": "We need something working quickly with minimal approvals."
+    },
+    {
+      "id": "lowApproval",
+      "label": "Minimize security & procurement approvals",
+      "hint": "Avoid months of paperwork."
+    },
+    {
+      "id": "pocAllowed",
+      "label": "POC environment/time is approved",
+      "hint": "Allows us to validate quickly instead of speculating."
+    },
+
+    {
+      "id": "noOfficeOnServer",
+      "label": "No Office suite installed on the web/app server",
+      "hint": "Prefer isolation over installing LO/OO on the server OS."
+    },
+    {
+      "id": "dockerAllowed",
+      "label": "Docker / containers are allowed",
+      "hint": "If containers are approved, LO/OO can run isolated as a service."
+    },
+    {
+      "id": "cloudInfraAvailable",
+      "label": "Cloud account + infrastructure can be approved/setup",
+      "hint": "If we can’t get tenant/app-permissions/provisioning, cloud routes become impractical."
+    },
+
+    {
+      "id": "noDownload",
+      "label": "In-browser viewing (no downloads)",
+      "hint": "Goal is a web viewer experience."
+    },
+    {
+      "id": "signing",
+      "label": "Document signing is required",
+      "hint": "If true, M365-native flows may become more attractive."
+    },
+    {
+      "id": "highFidelity",
+      "label": "High-fidelity rendering matters",
+      "hint": "Complex docs must render consistently."
+    },
+    {
+      "id": "lowCost",
+      "label": "Minimize licensing cost",
+      "hint": "Prefer open/free options if acceptable."
+    },
+
+    {
+      "id": "m365StorageOk",
+      "label": "Microsoft 365 storage is acceptable (SharePoint / OneDrive)",
+      "hint": "This is a derived capability — only true if the supporting requirements below are met."
+    },
+
+    {
+      "id": "aadAuth",
+      "label": "Users/app can authenticate via Entra ID (AAD)",
+      "hint": "Needed for preview/embed and Graph access."
+    },
+    {
+      "id": "m365DataAllowed",
+      "label": "Compliance allows data to reside in M365 (even temporarily)",
+      "hint": "Includes staging, previews, thumbnails, and derived PDFs."
+    },
+    {
+      "id": "m365ServiceOwnedStorage",
+      "label": "Service-owned SharePoint site/drive is approved",
+      "hint": "Avoids user-owned OneDrive lifecycle issues."
+    },
+    {
+      "id": "m365AppRegistrationOk",
+      "label": "App registration in Entra ID is allowed",
+      "hint": "Required for service-to-service Graph access."
+    },
+    {
+      "id": "m365GraphPermissionsOk",
+      "label": "Graph permissions can be approved (Sites/Files scopes)",
+      "hint": "Example: Sites.Read.All / Files.ReadWrite.All or delegated equivalents."
+    },
+    {
+      "id": "m365LifecycleDefined",
+      "label": "Lifecycle rules defined (retention/cleanup/audit)",
+      "hint": "Who owns, how long stored, deletion rules, audit trail."
+    },
+    {
+      "id": "m365NetworkAccessOk",
+      "label": "Network allows SharePoint/OneDrive endpoints",
+      "hint": "Proxy/firewall allows required M365 endpoints."
+    },
+    {
+      "id": "m365EmbeddingAllowed",
+      "label": "Embedding/preview is allowed (CSP/iframe/cross-domain OK)",
+      "hint": "If embedding external Microsoft frames/URLs is blocked, preview breaks."
+    },
+    {
+      "id": "cspRelaxationOk",
+      "label": "Security will allow CSP changes needed for embedding",
+      "hint": "If needed, approve frame-src/script-src rules for Microsoft domains."
+    },
+
+    {
+      "id": "usersHaveM365Identity",
+      "label": "Users authenticate with M365 identities",
+      "hint": "Strongly helps for embedded preview scenarios."
+    },
+
+    {
+      "id": "graphConversionNeeded",
+      "label": "Cloud conversion via Graph is acceptable (upload→convert→download)",
+      "hint": "We accept temporary staging in M365 to obtain a PDF."
+    },
+    {
+      "id": "graphUploadStagingOk",
+      "label": "Staging uploads to OneDrive/SharePoint is acceptable",
+      "hint": "Graph conversion typically requires the file to live in a drive first."
+    },
+    {
+      "id": "graphAppOnlyAllowed",
+      "label": "App-only (client credential) Graph access is allowed",
+      "hint": "Preferred for background services; delegated user flow is more complex."
+    }
+  ],
+
+  "weights": [
+    {
+      "requirementId": "fast",
+      "effects": {
+        "libreoffice": 10,
+        "openoffice": 5,
+        "aspose": -10,
+        "msgraph_convert": -6,
+        "sharepoint_preview": -4,
+        "onedrive_preview": -4
+      }
+    },
+    {
+      "requirementId": "lowApproval",
+      "effects": {
+        "libreoffice": 6,
+        "openoffice": 2,
+        "aspose": -14,
+        "msgraph_convert": -8,
+        "sharepoint_preview": -6,
+        "onedrive_preview": -6
+      }
+    },
+    {
+      "requirementId": "pocAllowed",
+      "effects": {
+        "libreoffice": 4,
+        "openoffice": 2,
+        "msgraph_convert": 4,
+        "sharepoint_preview": 4,
+        "onedrive_preview": 4
+      }
+    },
+
+    {
+      "requirementId": "noOfficeOnServer",
+      "effects": {
+        "aspose": 6,
+        "msgraph_convert": 8,
+        "sharepoint_preview": 8,
+        "onedrive_preview": 8
+      }
+    },
+    {
+      "requirementId": "dockerAllowed",
+      "effects": {
+        "libreoffice": 8,
+        "openoffice": 4
+      }
+    },
+    {
+      "requirementId": "cloudInfraAvailable",
+      "effects": {
+        "msgraph_convert": 12,
+        "sharepoint_preview": 12,
+        "onedrive_preview": 12
+      }
+    },
+
+    {
+      "requirementId": "m365StorageOk",
+      "effects": {
+        "msgraph_convert": 10,
+        "sharepoint_preview": 12,
+        "onedrive_preview": 10
+      }
+    },
+
+    {
+      "requirementId": "aadAuth",
+      "effects": {
+        "msgraph_convert": 8,
+        "sharepoint_preview": 8,
+        "onedrive_preview": 8
+      }
+    },
+    {
+      "requirementId": "m365DataAllowed",
+      "effects": {
+        "msgraph_convert": 10,
+        "sharepoint_preview": 12,
+        "onedrive_preview": 12
+      }
+    },
+    {
+      "requirementId": "m365ServiceOwnedStorage",
+      "effects": {
+        "msgraph_convert": 8,
+        "sharepoint_preview": 10,
+        "onedrive_preview": 6
+      }
+    },
+    {
+      "requirementId": "m365AppRegistrationOk",
+      "effects": {
+        "msgraph_convert": 8,
+        "sharepoint_preview": 6,
+        "onedrive_preview": 6
+      }
+    },
+    {
+      "requirementId": "m365GraphPermissionsOk",
+      "effects": {
+        "msgraph_convert": 12,
+        "sharepoint_preview": 6,
+        "onedrive_preview": 6
+      }
+    },
+    {
+      "requirementId": "m365LifecycleDefined",
+      "effects": {
+        "msgraph_convert": 6,
+        "sharepoint_preview": 6,
+        "onedrive_preview": 6
+      }
+    },
+    {
+      "requirementId": "m365NetworkAccessOk",
+      "effects": {
+        "msgraph_convert": 6,
+        "sharepoint_preview": 6,
+        "onedrive_preview": 6
+      }
+    },
+    {
+      "requirementId": "m365EmbeddingAllowed",
+      "effects": {
+        "sharepoint_preview": 14,
+        "onedrive_preview": 12,
+        "msgraph_convert": 2
+      }
+    },
+    {
+      "requirementId": "cspRelaxationOk",
+      "effects": {
+        "sharepoint_preview": 8,
+        "onedrive_preview": 8
+      }
+    },
+
+    {
+      "requirementId": "usersHaveM365Identity",
+      "effects": {
+        "sharepoint_preview": 10,
+        "onedrive_preview": 8,
+        "msgraph_convert": 4
+      }
+    },
+
+    {
+      "requirementId": "graphConversionNeeded",
+      "effects": {
+        "msgraph_convert": 12
+      }
+    },
+    {
+      "requirementId": "graphUploadStagingOk",
+      "effects": {
+        "msgraph_convert": 10
+      }
+    },
+    {
+      "requirementId": "graphAppOnlyAllowed",
+      "effects": {
+        "msgraph_convert": 8
+      }
+    },
+
+    {
+      "requirementId": "noDownload",
+      "effects": {
+        "sharepoint_preview": 12,
+        "onedrive_preview": 10,
+        "aspose": 6,
+        "libreoffice": 5,
+        "openoffice": 4,
+        "msgraph_convert": 6
+      }
+    },
+    {
+      "requirementId": "signing",
+      "effects": {
+        "sharepoint_preview": 14,
+        "onedrive_preview": 10,
+        "aspose": 4,
+        "msgraph_convert": 4,
+        "libreoffice": -2,
+        "openoffice": -3
+      }
+    },
+    {
+      "requirementId": "highFidelity",
+      "effects": {
+        "aspose": 16,
+        "msgraph_convert": 10,
+        "sharepoint_preview": 8,
+        "onedrive_preview": 8,
+        "libreoffice": -3,
+        "openoffice": -6
+      }
+    },
+    {
+      "requirementId": "lowCost",
+      "effects": {
+        "aspose": -18,
+        "libreoffice": 10,
+        "openoffice": 6,
+        "msgraph_convert": -4,
+        "sharepoint_preview": -4,
+        "onedrive_preview": -4
+      }
+    }
+  ],
+
+  "rules": [
+    {
+      "id": "conflict_noOffice_noDocker",
+      "type": "penaltyIf",
+      "whenAllSelected": ["noOfficeOnServer"],
+      "whenNoneSelected": ["dockerAllowed"],
+      "penalties": { "libreoffice": -10, "openoffice": -12 },
+      "message": "Conflict: 'No Office on server' + Docker not allowed makes LO/OO hard to use safely."
+    },
+
+    {
+      "id": "block_m365_routes_without_cloud",
+      "type": "penaltyIf",
+      "whenNoneSelected": ["cloudInfraAvailable"],
+      "penalties": { "msgraph_convert": -20, "sharepoint_preview": -25, "onedrive_preview": -25 },
+      "message": "Cloud constraint: if cloud tenant/app setup is not feasible, M365 routes become impractical."
+    },
+
+    {
+      "id": "block_m365_routes_without_storage_ok",
+      "type": "penaltyIf",
+      "whenNoneSelected": ["m365StorageOk"],
+      "penalties": { "msgraph_convert": -16, "sharepoint_preview": -25, "onedrive_preview": -25 },
+      "message": "Storage constraint: if documents cannot be staged/stored in M365, preview/Graph paths are blocked."
+    },
+
+    {
+      "id": "m365_storage_requires_compliance",
+      "type": "penaltyIf",
+      "whenAllSelected": ["m365StorageOk"],
+      "whenNoneSelected": ["m365DataAllowed"],
+      "penalties": { "msgraph_convert": -25, "sharepoint_preview": -35, "onedrive_preview": -35 },
+      "message": "M365 gate: 'M365 storage acceptable' requires compliance approval for data to reside in M365 (even temporarily)."
+    },
+
+    {
+      "id": "m365_preview_requires_embed",
+      "type": "penaltyIf",
+      "whenAllSelected": ["m365StorageOk"],
+      "whenNoneSelected": ["m365EmbeddingAllowed"],
+      "penalties": { "sharepoint_preview": -40, "onedrive_preview": -40 },
+      "message": "Preview gate: SharePoint/OneDrive embed requires CSP/iframe/cross-domain preview to be allowed."
+    },
+
+    {
+      "id": "graph_requires_app_reg_and_perms",
+      "type": "penaltyIf",
+      "whenAllSelected": ["graphConversionNeeded"],
+      "whenNoneSelected": ["m365AppRegistrationOk"],
+      "penalties": { "msgraph_convert": -35 },
+      "message": "Graph gate: Graph conversion requires Entra app registration."
+    },
+    {
+      "id": "graph_requires_permissions",
+      "type": "penaltyIf",
+      "whenAllSelected": ["graphConversionNeeded"],
+      "whenNoneSelected": ["m365GraphPermissionsOk"],
+      "penalties": { "msgraph_convert": -40 },
+      "message": "Graph gate: Graph conversion requires approved Sites/Files permissions."
+    },
+    {
+      "id": "graph_requires_staging_ok",
+      "type": "penaltyIf",
+      "whenAllSelected": ["graphConversionNeeded"],
+      "whenNoneSelected": ["graphUploadStagingOk"],
+      "penalties": { "msgraph_convert": -35 },
+      "message": "Graph gate: Conversion typically requires staging uploads into SharePoint/OneDrive first."
+    }
+  ]
+}
