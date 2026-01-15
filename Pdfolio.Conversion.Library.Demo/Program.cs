@@ -34,7 +34,6 @@ static string NormalizeSqliteConnectionString(string rawConnString)
     return csb.ToString();
 }
 
-
 static string ResolvePath(string? pathFromConfig, string defaultRelativeToExe)
 {
     var p = string.IsNullOrWhiteSpace(pathFromConfig) ? defaultRelativeToExe : pathFromConfig;
@@ -54,16 +53,15 @@ static string ToFullPathFromCwd(string path)
     return Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, path));
 }
 
-
 static void PrintUsage()
 {
     Console.WriteLine("Usage:");
-    Console.WriteLine("  dotnet run -- <filePath>");
-    Console.WriteLine("  dotnet run -- --folder <folderPath>");
+    Console.WriteLine(" dotnet run -- <file>");
+    Console.WriteLine(" dotnet run -- --folder <folder>");
     Console.WriteLine();
     Console.WriteLine("Examples:");
-    Console.WriteLine(@"  dotnet run -- ""..\Pdfolio.TestFiles\sample.docx""");
-    Console.WriteLine(@"  dotnet run -- --folder ""..\Pdfolio.TestFiles""");
+    Console.WriteLine(@" dotnet run -- ""..\Pdfolio.TestFiles\sample.docx""");
+    Console.WriteLine(@" dotnet run -- --folder ""..\Pdfolio.TestFiles""");
 }
 
 string? fileArg = null;
@@ -102,6 +100,9 @@ var backupConn = NormalizeSqliteConnectionString(rawBackupConn);
 var dbg = new SqliteConnectionStringBuilder(backupConn);
 Console.WriteLine("[DB] BackupDb = " + dbg.DataSource);
 
+// NEW: default OFF (non-breaking)
+var saveNextToOriginal = config.GetValue("Pdf:SavePdfNextToOriginal", false);
+Console.WriteLine("[PDF] SavePdfNextToOriginal = " + saveNextToOriginal);
 
 // ---------------------------
 // Ensure DB + repo
@@ -127,8 +128,12 @@ var options = new PdfConverterFactory.PdfConverterFactoryOptions(
         SofficePath: config["Pdf:OpenOffice:SofficePath"],
         FallbackSofficePath: config["Pdf:OpenOffice:FallbackSofficePath"]
     ),
-    KeepTempOnFailure: config.GetValue("Pdf:KeepTempOnFailure", true)
+    KeepTempOnFailure: config.GetValue("Pdf:KeepTempOnFailure", true),
+
+    // NEW:
+    EnableDiskSave: saveNextToOriginal
 );
+
 
 var converter = PdfConverterFactory.Create(options);
 
@@ -207,7 +212,12 @@ foreach (var path in filesToConvert)
         {
             ["source"] = "Pdfolio.Conversion.Library.Demo",
             ["rowId"] = id.ToString()
-        }
+        },
+
+        // NEW: enables “save next to original” behavior (default OFF via config)
+        OriginalFullPath: fi.FullName,
+        SavePdfNextToOriginal: saveNextToOriginal,
+        OutputPdfFileName: null
     );
 
     try

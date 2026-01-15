@@ -32,14 +32,17 @@ public static class PdfConverterFactory
 
         var mode = (options.Mode ?? "Auto").Trim().ToLowerInvariant();
 
-        return mode switch
+        IPdfConverter inner = mode switch
         {
-            "auto" or "default" => CreateAuto(options),
-            "aspose"            => CreateAspose(options),
+            "auto" or "default"   => CreateAuto(options),
+            "aspose"              => CreateAspose(options),
             "libreoffice" or "lo" => CreateLibreOffice(options),
             "openoffice"  or "oo" => CreateOpenOffice(options),
             _ => throw new InvalidOperationException($"Unknown Mode '{options.Mode}'. Use Auto, Aspose, LibreOffice, OpenOffice.")
         };
+
+        // Non-breaking: DiskSavePdfConverter is a no-op unless request.SavePdfNextToOriginal == true
+        return new DiskSavePdfConverter(inner);
     }
 
     private static IPdfConverter CreateAuto(PdfConverterFactoryOptions options)
